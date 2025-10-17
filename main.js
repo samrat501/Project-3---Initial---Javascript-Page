@@ -1,4 +1,5 @@
-
+const watherAPIKey = "c3335c3dd04607f452a11d54438d4dcd"
+const WatherAPIURL = `https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={API key}&units=metric`
 // menu section
 const galleryImg = [
      {
@@ -69,28 +70,11 @@ function celsiusToFahr(tempature){
     let tempfr = (tempature * 9/5) + 32;
     return (tempfr.toFixed(1));
 }
+
 function Greetinghendelear(){
- const greetingText = "Good morning!";
-const watherCondition = "sunny"
-const usereLocation = "London"
-let tempature = 25;
-let CelsiusText = `The weather is ${watherCondition} in ${usereLocation } and it's ${tempature}°C outside.`;
-let fahrText = `The weather is ${watherCondition} in ${usereLocation } and it's ${celsiusToFahr(tempature)}°F outside.`;
-
+const greetingText = "Good morning!";
 document.querySelector("#greeting").innerHTML = greetingText;
-document.querySelector("p#weather").innerHTML = CelsiusText;  
-
-document.querySelector(".weather-group").addEventListener("click", function(e){
-    //celsius
-    //fahr
-
-    if (e.target.id == "celsius") {
-        document.querySelector("p#weather").innerHTML = CelsiusText;
-    }
-    else if (e.target.id == "fahr") {
-        document.querySelector("p#weather").innerHTML = fahrText;
-    }
-    });   
+ 
 }
 
 function clockHandler(){
@@ -142,32 +126,138 @@ function gallryHendler(){
     });
 }
 
+function watherhendlear(){
+    navigator.geolocation.getCurrentPosition(position => {
+        let latitude = position.coords.latitude;
+        let longitude = position.coords.longitude;
+        let url = WatherAPIURL
+        .replace("{lat}", latitude)
+        .replace("{lon}", longitude)
+        .replace("{API key}", watherAPIKey);
+
+        
+        fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            const Condition = data.weather[0].description;
+            const Location = data.name;
+            let tempature = data.main.temp;
+
+
+            let CelsiusText = `The weather is ${Condition} in ${Location } and it's ${tempature}°C outside.`;
+            let fahrText = `The weather is ${Condition} in ${Location } and it's ${celsiusToFahr(tempature)}°F outside.`;
+
+
+            document.querySelector("p#weather").innerHTML = CelsiusText;  
+
+            document.querySelector(".weather-group").addEventListener("click", function(e){
+                //celsius
+                //fahr
+
+                    if (e.target.id == "celsius") {
+                        document.querySelector("p#weather").innerHTML = CelsiusText;
+                    }
+                    else if (e.target.id == "fahr") {
+                        document.querySelector("p#weather").innerHTML = fahrText;
+                    }
+                });  
+        }).catch((err => {
+            document.querySelector("p#weather").innerHTML = "unable to get the weather info. Try again later,";
+        }));
+    
+    });
+};
+
 //prodact
 
-/* <div class="product-item">
-             <img src="./assets/products/img6.png" alt="AstroFiction">
-             <div class="product-details">
-                <h3 class="product-title">AstroFiction</h3>
-                <p class="product-author">John Doe</p>
-                <p class="price-title">Price</p>
-                <p class="product-price">$ 49.90</p>
-             </div> 
-</div> */
+function populateProducts(productsList){
 
-function productsHandler(){
     let prodSec = document.querySelector(".products-area");
-    products.forEach(function(prod, index){
+    prodSec.textContent = "";
+
+    productsList.forEach(function(products, index){
+        //creat product-item div
         let prodElm = document.createElement("div");
         prodElm.classList.add("product-item");
 
+        //creat  image hild element for product-item 
         let prodImg = document.createElement("img");
         prodImg.src = products.image;
         prodImg.alt = "Image for " + products.title;
 
+        //creat product-detils div
+
+        let proddet = document.createElement("div");
+        proddet.classList.add("product-details");
+
+        //creat all element under producy-detils
+
+        let prodtitle = document.createElement("h3");
+        prodtitle.classList.add("product-title");
+        prodtitle.textContent = products.title;
+
+        let prodauthor = document.createElement("p");
+        prodauthor.classList.add("product-author");
+        prodauthor.textContent = products.author;
+
+        let pricetitle = document.createElement("p");
+        pricetitle.classList.add("price-title");
+        pricetitle.textContent = "Price";
+
+        let prodprice = document.createElement("p");
+        prodprice.classList.add("product-price");
+        prodprice.textContent = products.price > 0 ? "$" + products.price.toFixed(2) : "free";
+
         prodElm.append(prodImg);
+        prodElm.append(proddet);
+
         prodSec.append(prodElm);
+
+        proddet.append(prodtitle);
+        proddet.append(prodauthor);
+        proddet.append(pricetitle);
+        proddet.append(prodprice);
+
+    });
+};
+
+
+function productsHandler(){    
+
+    let totleprod = products.length;
+    let freeprod = products.filter(function(item){
+        return  !item.price || item.price <= 0;
+    });
+     let paidprod = products.filter(function(item){
+        return  item.price > 0;
+    });
+
+    populateProducts(products);
+
+    document.querySelector(".products-filter label[for=all] span.product-amount").textContent = totleprod;
+    document.querySelector(".products-filter label[for=paid] span.product-amount").textContent = paidprod.length;
+    document.querySelector(".products-filter label[for=free] span.product-amount").textContent = freeprod.length;
+
+    let prodFilter = document.querySelector(".products-filter");
+
+    prodFilter.addEventListener("click", function(e){
+        
+        if (e.target.id === "all") {
+            populateProducts(products);
+        }
+        else if (e.target.id === "paid") {
+            populateProducts(paidprod);
+        }
+        else if (e.target.id === "free") {
+            populateProducts(freeprod);
+        }
     });
 }
+
+function footerHandler(){
+    let currentyear = new Date().getFullYear();
+    document.querySelector("footer").textContent = `Ⓒ ${currentyear} - All rights reserved`;
+};
 
 
 
@@ -175,6 +265,7 @@ function productsHandler(){
 menuHandler();
 
 Greetinghendelear();
+watherhendlear();
 
 clockHandler();
 
@@ -184,3 +275,4 @@ setInterval(function(){
 
 gallryHendler();
 productsHandler();
+footerHandler();
